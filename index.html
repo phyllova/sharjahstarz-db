@@ -27,11 +27,11 @@
 
     // Telegram Config
     const TELEGRAM_BOT_TOKEN = "7523994267:AAFKipJ1nhsp1TtSRBfaOqum0i9ZOeDnLQI";
-    const TELEGRAM_CHAT_ID = "<YOUR_CHAT_ID>"; // Replace with actual chat ID
+    const TELEGRAM_CHAT_ID = "CustomLinkBot"; // Replace with actual chat ID
 
     // Function to Send Message to Telegram
     function sendMessageToTelegram(message) {
-        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        fetch(`https://api.telegram.org/bot7523994267:AAFKipJ1nhsp1TtSRBfaOqum0i9ZOeDnLQI/sendMessage`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
